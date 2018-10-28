@@ -1,0 +1,48 @@
+WHITESPACE = _{ " " }
+
+char = { ASCII_ALPHANUMERIC | "_" | "-" }
+dot = { "." }
+
+quote = { "\"" }
+
+bare_key = @{ char* }
+quoted_key = @{ quote ~ ( char | dot )+ ~ quote }
+simple_key = { quoted_key | bare_key }
+dotted_key = ${ simple_key ~ (dot ~ simple_key)+ }
+any_key = { dotted_key | simple_key }
+
+u = { ASCII_HEX_DIGIT }
+lc_u = _{ "\\u" }
+uni_4 = { u{4} }
+uni_escape_4 = @{ lc_u ~ uni_4 }
+
+uc_u = { "\\U" }
+uni_8 = { u{8} }
+uni_escape_8 = @{ uc_u ~ uni_8 }
+escape_backspace = { "\\b" }
+escape_tab = { "\\t" }
+escape_linefeed = { "\\n" }
+escape_formfeed = { "\\f" }
+escape_cr = { "\\r" }
+escape_quote = { "\\\"" }
+escape_backslash = { "\\\\" }
+
+escape = { escape_backspace | escape_tab | escape_linefeed | escape_formfeed | escape_cr | escape_quote | escape_backslash }
+
+str_val_chr = { char | uni_escape_4 | uni_escape_8 | escape }
+simple_string_val = { quote ~ str_val_chr+ ~ quote }
+
+triple_quote = @{ quote{3} }
+backslash = { "\\" }
+newline = { "\n" | "\r\n" }
+escaped_whitespace = @{ backslash ~ ( newline | WHITESPACE )+ }
+triple_quote_val = { triple_quote ~ ( str_val_chr | escaped_whitespace | newline | WHITESPACE )+ ~ triple_quote }
+
+int = @{ ASCII_DIGIT+ }
+float = @{ ASCII_DIGIT+ ~ dot ~ ASCII_DIGIT+ }
+
+any_val = { triple_quote_val | simple_string_val | int | float }
+
+kv = { any_key ~ "=" ~ any_val }
+
+file = { SOI ~ (kv ~ "\n"*)+ ~ EOI }
