@@ -12,3 +12,12 @@ fn test_count_kvs() {
         assert_eq!(kvs.len(), case.1)
     }
 }
+
+
+#[test]
+fn test_hack() {
+    let raw = fs::read_to_string("test.toml").unwrap();
+    let kvs = parse::parse_s(raw);
+    println!("{:?}", kvs);
+
+}
