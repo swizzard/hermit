@@ -1,0 +1,10 @@
+str = "value"
+other.thing = "stuff"
+uni = "\u2023\U0001F1F8"
+dig = 123
+esc = "\t"
+"tq" = """
+foo
+bar\
+
+baz"""
