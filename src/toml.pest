@@ -41,7 +41,18 @@ triple_quote_val = { triple_quote ~ ( str_val_chr | escaped_whitespace | newline
 int = @{ ASCII_DIGIT+ }
 float = @{ ASCII_DIGIT+ ~ dot ~ ASCII_DIGIT+ }
 
-any_val = { triple_quote_val | simple_string_val | int | float }
+datetime = @{ datetime_tz | dt | date | time }
+datetime_tz = @{ dt ~ offset }
+dt = @{ date ~ ( "T" | WHITESPACE ) ~ ( time_moment | time ) }
+colon = _{ ":" }
+hyphen = _{ "-" }
+date = @{ ASCII_DIGIT{4} ~ hyphen ~ ASCII_DIGIT{2} ~ hyphen ~ ASCII_DIGIT{2} }
+time = @{ ASCII_DIGIT{2} ~ colon ~ ASCII_DIGIT{2} ~ colon ~ ASCII_DIGIT{2} }
+time_moment = @{ time ~ moment }
+moment = @{ dot ~ ASCII_DIGIT{,6} }
+offset = @{ ( ( "+" | "-" ) ~ ( ASCII_DIGIT{2} ~ colon ~ ASCII_DIGIT{2} ) | "Z" ) }
+
+any_val = { datetime | triple_quote_val | simple_string_val | int | float }
 
 kv = { any_key ~ "=" ~ any_val }
 

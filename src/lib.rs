@@ -164,12 +164,17 @@ pub mod parse {
         s
     }
 
+    fn parse_datetime(p: Pair<Rule>) -> String {
+        p.into_inner().next().unwrap().as_str().to_owned()
+    }
+
     fn parse_val(p: Pair<Rule>) -> String {
         let v = p.into_inner().next().unwrap();
         match v.as_rule() {
             Rule::int | Rule::float => v.as_str().to_owned(),
             Rule::triple_quote_val => parse_triple_quote(v),
             Rule::simple_string_val => parse_string_val(v),
+            Rule::datetime => parse_datetime(v),
             _ => {
                 if DEBUG {
                     println!("{:?}", v);
