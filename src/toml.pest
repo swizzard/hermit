@@ -2,6 +2,7 @@ WHITESPACE = _{ " " }
 
 char = { ASCII_ALPHANUMERIC | "_" | "-" }
 dot = { "." }
+comma = { "," }
 
 quote = { "\"" }
 
@@ -27,7 +28,14 @@ escape_cr = { "\\r" }
 escape_quote = { "\\\"" }
 escape_backslash = { "\\\\" }
 
-escape = { escape_backspace | escape_tab | escape_linefeed | escape_formfeed | escape_cr | escape_quote | escape_backslash }
+escape = { escape_backspace
+         | escape_tab
+         | escape_linefeed
+         | escape_formfeed
+         | escape_cr
+         | escape_quote
+         | escape_backslash
+         }
 
 str_val_chr = { char | uni_escape_4 | uni_escape_8 | escape }
 simple_string_val = { quote ~ str_val_chr+ ~ quote }
@@ -36,7 +44,12 @@ triple_quote = @{ quote{3} }
 backslash = { "\\" }
 newline = { "\n" | "\r\n" }
 escaped_whitespace = @{ backslash ~ ( newline | WHITESPACE )+ }
-triple_quote_val = { triple_quote ~ ( str_val_chr | escaped_whitespace | newline | WHITESPACE )+ ~ triple_quote }
+triple_quote_val = { triple_quote ~
+                       ( str_val_chr
+                       | escaped_whitespace
+                       | newline
+                       | WHITESPACE )+
+                     ~ triple_quote }
 
 int = @{ ASCII_DIGIT+ }
 float = @{ ASCII_DIGIT+ ~ dot ~ ASCII_DIGIT+ }
@@ -49,11 +62,26 @@ hyphen = _{ "-" }
 date = @{ ASCII_DIGIT{4} ~ hyphen ~ ASCII_DIGIT{2} ~ hyphen ~ ASCII_DIGIT{2} }
 time = @{ ASCII_DIGIT{2} ~ colon ~ ASCII_DIGIT{2} ~ colon ~ ASCII_DIGIT{2} }
 time_moment = @{ time ~ moment }
-moment = @{ dot ~ ASCII_DIGIT{,6} }
+moment = @{ dot ~ ASCII_DIGIT+ }
 offset = @{ ( ( "+" | "-" ) ~ ( ASCII_DIGIT{2} ~ colon ~ ASCII_DIGIT{2} ) | "Z" ) }
 
-any_val = { datetime | triple_quote_val | simple_string_val | int | float }
+COMMENT = _{ "#" ~ (!( "#" | newline) ~ ANY)* ~ newline }
 
-kv = { any_key ~ "=" ~ any_val }
+any_simple_val = { datetime | triple_quote_val | simple_string_val | int | float }
 
-file = { SOI ~ (kv ~ "\n"*)+ ~ EOI }
+open_bracket = _{ "[" }
+close_bracket = _{ "]" }
+
+array = {
+  open_bracket ~
+    newline* ~
+    ( any_simple_val ~ comma ) ~ newline* ~
+    ( ( any_simple_val ~ comma? ) ~ newline* )* ~
+  close_bracket
+}
+
+any_val = { any_simple_val | array }
+
+kv = { any_key ~ "=" ~ any_val ~ (WHITESPACE+ ~ COMMENT)? }
+
+file = { SOI ~ (( kv | COMMENT ) ~ "\n"*)+ ~ EOI }
