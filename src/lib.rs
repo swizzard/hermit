@@ -164,12 +164,17 @@ pub mod parse {
         s
     }
 
-    fn parse_val(p: Pair<Rule>) -> String {
+    fn parse_datetime(p: Pair<Rule>) -> String {
+        p.as_str().to_owned()
+    }
+
+    fn parse_simple_val(p: Pair<Rule>) -> String {
         let v = p.into_inner().next().unwrap();
         match v.as_rule() {
             Rule::int | Rule::float => v.as_str().to_owned(),
             Rule::triple_quote_val => parse_triple_quote(v),
             Rule::simple_string_val => parse_string_val(v),
+            Rule::datetime => parse_datetime(v),
             _ => {
                 if DEBUG {
                     println!("{:?}", v);
@@ -179,6 +184,37 @@ pub mod parse {
         }
     }
 
+    fn parse_array(p: Pair<Rule>) -> String {
+        let mut s = String::from("[");
+        for inner in p.into_inner() {
+            match inner.as_rule() {
+                Rule::any_simple_val => s.push_str(&parse_simple_val(inner)),
+                Rule::comma => s.push_str(", "),
+                Rule::newline => (),
+                _ => {
+                    if DEBUG {
+                        println!("{:?}", inner);
+                    }
+                }
+            }
+        }
+        s.push(']');
+        s
+    }
+
+    fn parse_val(p: Pair<Rule>) -> String {
+        let inner = p.into_inner().next().unwrap();
+        match inner.as_rule() {
+            Rule::any_simple_val => return parse_simple_val(inner),
+            Rule::array => return parse_array(inner),
+            _ => {
+                if DEBUG {
+                    println!("{:?}", inner)
+                }
+                String::new()
+            }
+        }
+    }
 
     fn parse_kv(p: Pair<Rule>) -> RawKV {
         let mut namespace = Vec::new();
