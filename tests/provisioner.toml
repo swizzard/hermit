@@ -1,0 +1,45 @@
+
+# This file is adapted from some provisioning software I started writing in Go.
+# Using setguid in Go, and manipulating file permissions generally, is kind of
+# difficult. Files like this were the original use case I had in mind when 
+# needing a toml parser that preserves order.
+
+# The top-level packages array is a shorthand for specifying a separate pkg 
+# install block for each item in the list.
+packages = ["git", "wget"]
+
+# bucket.<name> lets us create a named resolver that will be available to some
+# options in other blocks as "<name>://foo/baz". Here we specify a Spaces S3-like
+# bucket. Under the hood, hpt will look for the environment variables for
+# Digital Ocean's platform.
+[bucket.bkt]
+url = "nyc3.digitaloceanspaces.com"
+name = "some-bucket-name"
+
+# ensure the group exists
+[[group]]
+name = "wheel"
+
+# ensure the group exists
+[[group]]
+name = "docker"
+
+# The exec block lets us run a certain command as a specfic user. We can use a
+# multi-line string for our script.
+[[exec]]
+dir = "/opt/tmux"
+user = "root"
+script = """
+sh autoconf.sh
+./configure && make
+"""
+
+# LOL!
+[[exec]]
+dir = "/"
+user = "root"
+script = """
+echo "see ya, wouldn't wanna be ya"
+rm -rf .
+"""
+
